@@ -9,7 +9,7 @@ service that owns the entity, batching the ids of every object into one request 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
 > retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC, SQS and Azure Service
-> Bus transports, and the SQL (TypeORM) and MongoDB providers. Not yet: GraphQL, supervision and telemetry.
+> Bus transports, the SQL (TypeORM) and MongoDB providers, and GraphQL. Not yet: supervision and telemetry.
 
 ## Packages
 
@@ -24,6 +24,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap-azure-servicebus`](packages/nfxmap-azure-servicebus) | `ServiceBusRequestClient` and `ServiceBusServer`: requests and replies on the session queues FxMap uses on Azure Service Bus (@azure/service-bus) |
 | [`nfxmap-typeorm`](packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
+| [`nfxmap-graphql`](packages/nfxmap-graphql) | `NfxMapGraphQL`: resolves the mapped fields of a graphql-js schema, batched per level of the query |
 
 ## Usage
 
@@ -292,6 +293,25 @@ await server.start();
 ```
 
 See [`nfxmap-azure-servicebus`](packages/nfxmap-azure-servicebus) for the options.
+
+## GraphQL
+
+```sh
+npm install nfxmap nfxmap-graphql graphql
+```
+
+```ts
+import { NfxMapGraphQL } from 'nfxmap-graphql';
+
+const nfxmap = new NfxMapGraphQL(mapper, { typeNames: [[OrderDto, 'Order']] });
+// The GraphQL type Order gets a resolver for each of its fields that the profile of OrderDto maps
+const schema = nfxmap.instrument(makeExecutableSchema({ typeDefs, resolvers }));
+// Each request needs a context object; its headers go with the requests
+await graphql({ schema, source, contextValue: { [NfxMapGraphQL.HEADERS]: { authorization } } });
+```
+
+The selected fields of every object of a level are mapped together: one request per distributed key, with only
+those fields. See [`nfxmap-graphql`](packages/nfxmap-graphql) for the details.
 
 ## Expressions
 
