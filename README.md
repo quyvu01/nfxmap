@@ -8,14 +8,15 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, and the JSON wire messages of FxMap 5.1.1. Not yet: the transports (NATS, RabbitMQ, Kafka, gRPC, SQS,
-> Azure Service Bus), the database providers, GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, and the NATS transport. Not yet: the other transports (RabbitMQ,
+> Kafka, gRPC, SQS, Azure Service Bus), the database providers, GraphQL, supervision and telemetry.
 
 ## Packages
 
 | Package | Content |
 |---|---|
 | [`nfxmap`](packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
+| [`nfxmap-nats`](packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
 
 ## Usage
 
@@ -143,7 +144,30 @@ Use a string key on both sides (`'UserOf'` here, `UseDistributedKey("UserOf")` i
 in jfxmap). `WireMessages` reads and writes the JSON that FxMap 5.1.1 sends on its message transports
 (`{"SelectorIds":[...],"Expressions":[...]}`, and the `Result` reply with its `Fault`), `DotNetKeyNames` gives the
 names FxMap derives from a key, and `WireResponder` answers a received request with the handler of its key: the
-pieces the transports will be built on.
+pieces the transports are built on. A transport package speaks to the FxMap and jfxmap services on the same broker.
+
+## NATS
+
+```sh
+npm install nfxmap nfxmap-nats @nats-io/transport-node
+```
+
+```ts
+import { connect } from '@nats-io/transport-node';
+import { NatsRequestClient, NatsServer } from 'nfxmap-nats';
+
+const connection = await connect({ servers: 'nats://localhost:4222' });
+
+// The consumer
+const mapper = createDistributedMapper({ profiles: [new OrderResponseProfile()],
+                                         requestClient: new NatsRequestClient(connection) });
+
+// The owner
+const server = new NatsServer(connection, [users]);
+await server.start();
+```
+
+See [`nfxmap-nats`](packages/nfxmap-nats) for the options.
 
 ## Expressions
 
