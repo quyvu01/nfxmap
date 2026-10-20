@@ -110,3 +110,6 @@ jobs:
           cd ../nfxmap-azure-servicebus
           node -e "require('nfxmap-azure-servicebus')"
           node --input-type=module -e "await import('nfxmap-azure-servicebus')"
+          cd ../nfxmap-graphql
+          node -e "require('nfxmap-graphql')"
+          node --input-type=module -e "await import('nfxmap-graphql')"
