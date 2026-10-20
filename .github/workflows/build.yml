@@ -30,6 +30,12 @@ jobs:
         image: mongo:7
         ports:
           - 27017:27017
+      rabbitmq:
+        image: rabbitmq:4.1
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping" --health-interval 5s --health-timeout 10s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -43,6 +49,7 @@ jobs:
           NATS_URL: nats://localhost:4222
           PG_URL: postgres://postgres:postgres@localhost:5432/nfxmap
           MONGO_URL: mongodb://localhost:27017
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -58,3 +65,6 @@ jobs:
           cd ../nfxmap-mongodb
           node -e "require('nfxmap-mongodb')"
           node --input-type=module -e "await import('nfxmap-mongodb')"
+          cd ../nfxmap-rabbitmq
+          node -e "require('nfxmap-rabbitmq')"
+          node --input-type=module -e "await import('nfxmap-rabbitmq')"

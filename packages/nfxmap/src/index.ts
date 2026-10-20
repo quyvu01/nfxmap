@@ -62,4 +62,5 @@ export {
     WireMessages,
     WireResponder,
 } from './wire.js';
+export { PendingReplies } from './pending.js';
 export { writeJson } from './json.js';
