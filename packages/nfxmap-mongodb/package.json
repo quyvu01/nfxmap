@@ -1,0 +1,60 @@
+{
+  "name": "nfxmap-mongodb",
+  "version": "0.1.0",
+  "description": "MongoDB data provider for nfxmap (FxMap for Node.js): answers the requests for an entity from a MongoDB collection",
+  "license": "Apache-2.0",
+  "author": "quyvu01",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quyvu01/nfxmap.git",
+    "directory": "packages/nfxmap-mongodb"
+  },
+  "keywords": [
+    "fxmap",
+    "nfxmap",
+    "mongodb",
+    "mapping",
+    "distributed",
+    "microservices"
+  ],
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc -p tsconfig.cjs.json && node scripts/mark-cjs.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "mongodb": "^6.0.0 || ^7.0.0",
+    "nfxmap": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "mongodb": "^7.7.0",
+    "nfxmap": "*",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

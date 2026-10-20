@@ -237,3 +237,26 @@ export function outputKey(property: ProjectionProperty): string {
 export function pathSegments(property: ProjectionProperty): string[] {
     return property.path === null ? [] : property.path.split('.');
 }
+
+// Keys of the nodes that hold no name of the language
+const NOT_NAMES = new Set(['kind', 'literalType', 'functionName', 'operator', 'direction', 'aggregationType']);
+
+/**
+ * Every name an expression may read, for a data provider that loads only what is read: its identifiers, the segments
+ * of its paths (`Country.Name`) and its string arguments (`:orderBy('Name')`). It may hold more than is read (a string
+ * literal compared with a value), never less; the exposed names are not mapped to their properties.
+ */
+export function referencedNames(node: ExpressionNode): string[] {
+    const names = new Set<string>();
+    const visit = (value: unknown): void => {
+        if (typeof value === 'string') {
+            for (const part of value.split('.')) if (part.length > 0) names.add(part);
+        } else if (Array.isArray(value)) {
+            for (const item of value) visit(item);
+        } else if (value !== null && typeof value === 'object') {
+            for (const [key, inner] of Object.entries(value)) if (!NOT_NAMES.has(key)) visit(inner);
+        }
+    };
+    visit(node);
+    return [...names];
+}

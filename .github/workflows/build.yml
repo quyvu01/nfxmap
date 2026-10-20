@@ -25,7 +25,11 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,6 +42,7 @@ jobs:
         env:
           NATS_URL: nats://localhost:4222
           PG_URL: postgres://postgres:postgres@localhost:5432/nfxmap
+          MONGO_URL: mongodb://localhost:27017
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -50,3 +55,6 @@ jobs:
           cd ../nfxmap-typeorm
           node -e "require('nfxmap-typeorm')"
           node --input-type=module -e "await import('nfxmap-typeorm')"
+          cd ../nfxmap-mongodb
+          node -e "require('nfxmap-mongodb')"
+          node --input-type=module -e "await import('nfxmap-mongodb')"

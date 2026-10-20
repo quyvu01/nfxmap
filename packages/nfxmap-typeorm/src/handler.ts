@@ -7,7 +7,7 @@ import {
     type MapRequest,
     type QueryHandler,
 } from 'nfxmap';
-import { type ExpressionNode, parseExpression } from 'nfxmap/expressions';
+import { type ExpressionNode, parseExpression, referencedNames } from 'nfxmap/expressions';
 import { type DataSource, type EntityMetadata, In } from 'typeorm';
 type EmbeddedMetadata = EntityMetadata['embeddeds'][number];
 import { EntityNotManagedError, IdColumnNotFoundError, UnsupportedIdTypeError } from './errors.js';
@@ -144,7 +144,7 @@ export class TypeOrmQueryHandler<T> implements QueryHandler {
                 // The evaluator reports it
                 continue;
             }
-            collectNames(node, add);
+            for (const name of referencedNames(node)) add(name);
         }
         for (const [exposed, property] of this.definition.exposedNames)
             if (names.has(exposed.toLowerCase())) add(property);
@@ -279,26 +279,6 @@ function embeddedSelect(embedded: EmbeddedMetadata): Select {
     for (const column of embedded.columns) select[column.propertyName] = true;
     for (const inner of embedded.embeddeds) select[inner.propertyName] = embeddedSelect(inner);
     return select;
-}
-
-// Keys of the nodes that are not names of the language
-const NOT_NAMES = new Set(['kind', 'literalType', 'functionName', 'operator', 'direction', 'aggregationType']);
-
-/** Every name an expression may read: its identifiers, and its string arguments (`:orderBy('Name')`). */
-function collectNames(node: unknown, add: (name: string) => void): void {
-    if (typeof node === 'string') {
-        // A path may be written as one name, as in a projection (Country.Name)
-        for (const part of node.split('.')) if (part.length > 0) add(part);
-        return;
-    }
-    if (Array.isArray(node)) {
-        for (const item of node) collectNames(item, add);
-        return;
-    }
-    if (node === null || typeof node !== 'object') return;
-    for (const [key, value] of Object.entries(node)) {
-        if (!NOT_NAMES.has(key)) collectNames(value, add);
-    }
 }
 
 /** Whether the class declares a getter (or another non-column property on its prototype) of one of the names. */
