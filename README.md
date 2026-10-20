@@ -8,8 +8,8 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka and gRPC transports, and the SQL (TypeORM)
-> and MongoDB providers. Not yet: the SQS and Azure Service Bus transports, GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC and SQS transports, and the SQL
+> (TypeORM) and MongoDB providers. Not yet: the Azure Service Bus transport, GraphQL, supervision and telemetry.
 
 ## Packages
 
@@ -20,6 +20,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap-rabbitmq`](packages/nfxmap-rabbitmq) | `RabbitMqRequestClient` and `RabbitMqServer`: request-reply over RabbitMQ (amqplib), on the exchanges and queues FxMap uses |
 | [`nfxmap-kafka`](packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
 | [`nfxmap-grpc`](packages/nfxmap-grpc) | `GrpcRequestClient` and `FxMapGrpcService`: FxMap's `FxMapTransportService` over gRPC (@grpc/grpc-js) |
+| [`nfxmap-sqs`](packages/nfxmap-sqs) | `SqsRequestClient` and `SqsServer`: requests and replies on the queues FxMap uses on Amazon SQS (@aws-sdk/client-sqs) |
 | [`nfxmap-typeorm`](packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
 
@@ -243,6 +244,29 @@ server.bindAsync('0.0.0.0:9090', ServerCredentials.createInsecure(), () => undef
 ```
 
 See [`nfxmap-grpc`](packages/nfxmap-grpc) for the options.
+
+## Amazon SQS
+
+```sh
+npm install nfxmap nfxmap-sqs @aws-sdk/client-sqs
+```
+
+```ts
+import { SQSClient } from '@aws-sdk/client-sqs';
+import { SqsRequestClient, SqsServer } from 'nfxmap-sqs';
+
+const sqs = new SQSClient({ region: 'us-east-1' });
+
+// The consumer
+const mapper = createDistributedMapper({ profiles: [new OrderResponseProfile()],
+                                         requestClient: new SqsRequestClient(sqs) });
+
+// The owner: creates and polls the queue of each of its keys
+const server = new SqsServer(sqs, [users]);
+await server.start();
+```
+
+See [`nfxmap-sqs`](packages/nfxmap-sqs) for the options.
 
 ## Expressions
 
