@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "paths": {
+      "nfxmap": [
+        "../nfxmap/src/index.ts"
+      ],
+      "nfxmap/expressions": [
+        "../nfxmap/src/expressions/index.ts"
+      ]
+    },
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false
+  },
+  "include": [
+    "src",
+    "test"
+  ]
+}
