@@ -9,7 +9,7 @@ service that owns the entity, batching the ids of every object into one request 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
 > retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC, SQS and Azure Service
-> Bus transports, the SQL (TypeORM) and MongoDB providers, GraphQL, and the server supervisor. Not yet: telemetry.
+> Bus transports, the SQL (TypeORM) and MongoDB providers, GraphQL, the server supervisor and OpenTelemetry.
 
 ## Packages
 
@@ -25,6 +25,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap-typeorm`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
 | [`nfxmap-graphql`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-graphql) | `NfxMapGraphQL`: resolves the mapped fields of a graphql-js schema, batched per level of the query |
+| [`nfxmap-opentelemetry`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-opentelemetry) | `NfxMapTelemetry`: FxMap's spans and metrics, and the W3C trace context carried from the consumer to the owner |
 
 ## Usage
 
@@ -168,6 +169,25 @@ await supervisor.start();
 supervisor.states();                             // health, restarts, last failure... of each server
 await supervisor.close();
 ```
+
+## OpenTelemetry
+
+```sh
+npm install nfxmap nfxmap-opentelemetry @opentelemetry/api
+```
+
+```ts
+import { NfxMapTelemetry } from 'nfxmap-opentelemetry';
+
+const telemetry = new NfxMapTelemetry();
+const mapper = createDistributedMapper({ profiles, requestClient: telemetry.instrumentClient(natsClient) });
+const server = new NatsServer(connection, telemetry.instrumentHandlers([users]));
+```
+
+The spans `fxmap.request` and `fxmap.process` and the histograms `fxmap.client.request.duration` and
+`fxmap.server.request.duration` have FxMap's names, and the trace context travels as the W3C `traceparent` header, so a
+trace goes from a Node consumer to a .NET or Java owner and back. See
+[`nfxmap-opentelemetry`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-opentelemetry) for the attributes.
 
 ## Interoperability
 

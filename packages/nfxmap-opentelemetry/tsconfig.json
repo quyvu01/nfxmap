@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "paths": {
+      "nfxmap": ["../nfxmap/src/index.ts"],
+      "nfxmap-grpc": ["../nfxmap-grpc/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

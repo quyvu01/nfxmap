@@ -113,3 +113,6 @@ jobs:
           cd ../nfxmap-graphql
           node -e "require('nfxmap-graphql')"
           node --input-type=module -e "await import('nfxmap-graphql')"
+          cd ../nfxmap-opentelemetry
+          node -e "require('nfxmap-opentelemetry')"
+          node --input-type=module -e "await import('nfxmap-opentelemetry')"
