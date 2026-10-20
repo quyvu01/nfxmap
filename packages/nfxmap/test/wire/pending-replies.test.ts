@@ -65,6 +65,25 @@ describe('PendingReplies', () => {
         expect(pending.size).toBe(0);
     });
 
+    it('does not report a request failed before it is awaited as an unhandled rejection', async () => {
+        const unhandled: unknown[] = [];
+        const listener = (reason: unknown) => unhandled.push(reason);
+        process.on('unhandledRejection', listener);
+        try {
+            const pending = new PendingReplies();
+            const reply = pending.register('c1', 'UserOf', 1000);
+
+            // The client closes while the request is still being sent
+            pending.failAll(new Error('closed'));
+            await new Promise(resolve => setTimeout(resolve, 10));
+
+            expect(unhandled).toEqual([]);
+            await expect(reply).rejects.toThrow('closed');
+        } finally {
+            process.off('unhandledRejection', listener);
+        }
+    });
+
     it('refuses a correlation id that already waits', async () => {
         const pending = new PendingReplies();
         const reply = pending.register('c1', 'UserOf', 1000);
