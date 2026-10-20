@@ -9,13 +9,13 @@ service that owns the entity, batching the ids of every object into one request 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
 > retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC, SQS and Azure Service
-> Bus transports, the SQL (TypeORM) and MongoDB providers, and GraphQL. Not yet: supervision and telemetry.
+> Bus transports, the SQL (TypeORM) and MongoDB providers, GraphQL, and the server supervisor. Not yet: telemetry.
 
 ## Packages
 
 | Package | Content |
 |---|---|
-| [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
+| [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages, the `ServerSupervisor`; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
 | [`nfxmap-nats`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
 | [`nfxmap-rabbitmq`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-rabbitmq) | `RabbitMqRequestClient` and `RabbitMqServer`: request-reply over RabbitMQ (amqplib), on the exchanges and queues FxMap uses |
 | [`nfxmap-kafka`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
@@ -146,6 +146,27 @@ const mapper = createDistributedMapper({
 });
 
 const handler = receivePipeline(users, [audit]);
+```
+
+## Supervision
+
+FxMap's `ServerSupervisor`: it starts the servers of a service (`NatsServer`, `KafkaServer`...) and starts them again
+when they fail, after a backoff that grows from 1 second up to 5 minutes. The restarts are limited to 32 a minute, and
+3 failures in a row open a circuit breaker for a minute.
+
+```ts
+import { ServerSupervisor } from 'nfxmap';
+
+const supervisor = new ServerSupervisor({
+    strategy: 'oneForOne',                       // or 'oneForAll', 'restForOne'
+    directives: [[AuthenticationError, 'stop']], // 'resume', 'restart' (default), 'stop', 'escalate'
+})
+    .register('nats', natsServer)
+    .register('kafka', kafkaServer)
+    .onHealthChange(change => console.log(change.serverId, change.current));
+await supervisor.start();
+supervisor.states();                             // health, restarts, last failure... of each server
+await supervisor.close();
 ```
 
 ## Interoperability

@@ -64,3 +64,13 @@ export {
 } from './wire.js';
 export { PendingReplies } from './pending.js';
 export { writeJson } from './json.js';
+export {
+    type ServerHealth,
+    type ServerHealthChange,
+    type ServerState,
+    type SupervisionStrategy,
+    ServerSupervisor,
+    type SupervisorDirective,
+    type SupervisorLogger,
+    type SupervisorOptions,
+} from './supervision.js';

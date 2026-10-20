@@ -22,13 +22,17 @@ export class PendingReplies {
     register(correlationId: string, key: string, timeoutMs: number): Promise<Uint8Array> {
         if (this.pending.has(correlationId))
             throw new Error(`A request already waits for the correlation id ${correlationId}.`);
-        return new Promise<Uint8Array>((resolve, reject) => {
+        const reply = new Promise<Uint8Array>((resolve, reject) => {
             const timer = setTimeout(() => {
                 this.pending.delete(correlationId);
                 reject(new RequestTimedOutError(key, timeoutMs));
             }, timeoutMs);
             this.pending.set(correlationId, { resolve, reject, timer });
         });
+        // A client awaits the reply once its request is sent: a failure before (the client closed while sending) is
+        // not an unhandled rejection. The caller still gets it.
+        reply.catch(() => undefined);
+        return reply;
     }
 
     /** Completes the request of a reply; a reply that no request waits for is dropped. */
