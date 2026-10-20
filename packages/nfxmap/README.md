@@ -8,8 +8,8 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC and SQS transports, and the SQL
-> (TypeORM) and MongoDB providers. Not yet: the Azure Service Bus transport, GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC, SQS and Azure Service
+> Bus transports, and the SQL (TypeORM) and MongoDB providers. Not yet: GraphQL, supervision and telemetry.
 
 ## Packages
 
@@ -21,6 +21,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap-kafka`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
 | [`nfxmap-grpc`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-grpc) | `GrpcRequestClient` and `FxMapGrpcService`: FxMap's `FxMapTransportService` over gRPC (@grpc/grpc-js) |
 | [`nfxmap-sqs`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-sqs) | `SqsRequestClient` and `SqsServer`: requests and replies on the queues FxMap uses on Amazon SQS (@aws-sdk/client-sqs) |
+| [`nfxmap-azure-servicebus`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-azure-servicebus) | `ServiceBusRequestClient` and `ServiceBusServer`: requests and replies on the session queues FxMap uses on Azure Service Bus (@azure/service-bus) |
 | [`nfxmap-typeorm`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
 
@@ -267,6 +268,30 @@ await server.start();
 ```
 
 See [`nfxmap-sqs`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-sqs) for the options.
+
+## Azure Service Bus
+
+```sh
+npm install nfxmap nfxmap-azure-servicebus @azure/service-bus
+```
+
+```ts
+import { ServiceBusAdministrationClient, ServiceBusClient } from '@azure/service-bus';
+import { ServiceBusRequestClient, ServiceBusServer } from 'nfxmap-azure-servicebus';
+
+const serviceBus = new ServiceBusClient(connectionString);
+
+// The consumer
+const mapper = createDistributedMapper({ profiles: [new OrderResponseProfile()],
+                                         requestClient: new ServiceBusRequestClient(serviceBus) });
+
+// The owner: creates the session queues of its keys with an administration client, and reads them
+const server = new ServiceBusServer(serviceBus, [users],
+                                    { administration: new ServiceBusAdministrationClient(connectionString) });
+await server.start();
+```
+
+See [`nfxmap-azure-servicebus`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-azure-servicebus) for the options.
 
 ## Expressions
 

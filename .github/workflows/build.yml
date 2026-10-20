@@ -49,12 +49,27 @@ jobs:
           - 9324:9324
     steps:
       - uses: actions/checkout@v4
+      # The Service Bus emulator reads its queues from a file of the repository, so it starts after the checkout
+      - name: Start the Service Bus emulator
+        run: |
+          docker network create servicebus
+          docker run -d --name sql --network servicebus -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD=Fxmap_Passw0rd! \
+            mcr.microsoft.com/mssql/server:2022-latest
+          docker run -d --name servicebus --network servicebus -p 5673:5672 -p 5300:5300 -e SQL_SERVER=sql \
+            -e MSSQL_SA_PASSWORD=Fxmap_Passw0rd! -e ACCEPT_EULA=Y \
+            -v "$PWD/packages/nfxmap-azure-servicebus/test/servicebus-emulator.json:/ServiceBus_Emulator/ConfigFiles/Config.json" \
+            mcr.microsoft.com/azure-messaging/servicebus-emulator:2.0.1
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - name: Wait for the Service Bus emulator
+        run: |
+          for i in $(seq 1 90); do curl -sf localhost:5300/health && exit 0; sleep 2; done
+          docker logs servicebus
+          exit 1
       - run: npm test
         env:
           NATS_URL: nats://localhost:4222
@@ -63,6 +78,8 @@ jobs:
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
           KAFKA_BROKERS: localhost:9092
           SQS_ENDPOINT: http://localhost:9324
+          SERVICEBUS_CONNECTION_STRING: >-
+            Endpoint=sb://localhost:5673;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -90,3 +107,6 @@ jobs:
           cd ../nfxmap-sqs
           node -e "require('nfxmap-sqs')"
           node --input-type=module -e "await import('nfxmap-sqs')"
+          cd ../nfxmap-azure-servicebus
+          node -e "require('nfxmap-azure-servicebus')"
+          node --input-type=module -e "await import('nfxmap-azure-servicebus')"
