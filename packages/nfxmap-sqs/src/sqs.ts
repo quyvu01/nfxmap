@@ -11,18 +11,31 @@ export const DEFAULT_WAIT_TIME_SECONDS = 20;
 const MAX_MESSAGES = 10;
 // How long a loop waits after a failed poll before polling again
 const PAUSE_MS = 1_000;
+// How much longer than its wait time a poll may take
+const POLL_GRACE_MS = 5_000;
 
 // What the client and the server share: long polling, deleting the received messages, string attributes
 
 export async function receive(sqs: SQSClient, queueUrl: string, waitTimeSeconds: number,
                               signal: AbortSignal): Promise<Message[]> {
-    const response = await sqs.send(new ReceiveMessageCommand({
-        QueueUrl: queueUrl,
-        MaxNumberOfMessages: MAX_MESSAGES,
-        WaitTimeSeconds: waitTimeSeconds,
-        MessageAttributeNames: ['All'],
-    }), { abortSignal: signal });
-    return response.Messages ?? [];
+    // A poll whose answer never comes (an SQS emulator does not answer the polls of a deleted queue) ends a little
+    // after its wait time, so that the next one finds what happened
+    const deadline = new AbortController();
+    const abort = () => deadline.abort();
+    const timer = setTimeout(abort, waitTimeSeconds * 1_000 + POLL_GRACE_MS);
+    signal.addEventListener('abort', abort, { once: true });
+    try {
+        const response = await sqs.send(new ReceiveMessageCommand({
+            QueueUrl: queueUrl,
+            MaxNumberOfMessages: MAX_MESSAGES,
+            WaitTimeSeconds: waitTimeSeconds,
+            MessageAttributeNames: ['All'],
+        }), { abortSignal: deadline.signal });
+        return response.Messages ?? [];
+    } finally {
+        clearTimeout(timer);
+        signal.removeEventListener('abort', abort);
+    }
 }
 
 export async function deleteAll(sqs: SQSClient, queueUrl: string, messages: readonly Message[]): Promise<void> {
@@ -66,8 +79,9 @@ export function isQueueDoesNotExist(error: unknown): boolean {
         || failure?.Code === 'AWS.SimpleQueueService.NonExistentQueue';
 }
 
-export function isAbort(error: unknown, signal: AbortSignal): boolean {
-    return signal.aborted || (error as { name?: unknown } | null)?.name === 'AbortError';
+/** Whether a loop failed because it was stopped (a poll that took too long is a failure, polled again). */
+export function isAbort(_error: unknown, signal: AbortSignal): boolean {
+    return signal.aborted;
 }
 
 /** Waits after a failed poll; ends at once when the loop is stopped. */
