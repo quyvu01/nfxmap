@@ -1,0 +1,17 @@
+{
+  "name": "nfxmap-monorepo",
+  "private": true,
+  "description": "FxMap for Node.js: distributed data mapping",
+  "license": "Apache-2.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm test --workspaces",
+    "typecheck": "npm run typecheck --workspaces"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
