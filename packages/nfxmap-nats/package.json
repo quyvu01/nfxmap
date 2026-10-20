@@ -1,0 +1,51 @@
+{
+  "name": "nfxmap-nats",
+  "version": "0.1.0",
+  "description": "NATS transport for nfxmap (FxMap for Node.js): request-reply on the subjects FxMap uses",
+  "license": "Apache-2.0",
+  "author": "quyvu01",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quyvu01/nfxmap.git",
+    "directory": "packages/nfxmap-nats"
+  },
+  "keywords": ["fxmap", "nfxmap", "nats", "mapping", "distributed", "microservices"],
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && tsc -p tsconfig.cjs.json && node scripts/mark-cjs.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@nats-io/nats-core": "^3.0.0",
+    "nfxmap": "^0.1.0"
+  },
+  "devDependencies": {
+    "@nats-io/nats-core": "^3.4.0",
+    "@nats-io/transport-node": "^3.4.0",
+    "@types/node": "^22.10.0",
+    "nfxmap": "*",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

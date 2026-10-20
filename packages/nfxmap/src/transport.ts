@@ -29,3 +29,28 @@ export interface QueryHandler {
     /** The database the entities are read from, as FxMap names it in its telemetry, when there is one. */
     readonly dbSystem?: string;
 }
+
+/**
+ * Answers the requests for the keys a service owns over a transport (FxMap's `IRequestServer`): the NATS, RabbitMQ,
+ * Kafka, SQS and Service Bus servers.
+ */
+export interface RequestServer {
+    /**
+     * Starts answering; does nothing when the server already runs.
+     *
+     * @throws Error when the server cannot start (the broker cannot be reached, a queue cannot be declared)
+     */
+    start(): Promise<void>;
+
+    isRunning(): boolean;
+
+    /**
+     * The end of the current run: resolved when {@link close} stops it, rejected with the cause when the server stops on
+     * its own because of a failure (its connection closed, its consumer was cancelled...). Already resolved when the
+     * server does not run. A failed server can be started again.
+     */
+    whenStopped(): Promise<void>;
+
+    /** Stops answering; does nothing when the server does not run. The requests being answered still get their reply. */
+    close(): Promise<void>;
+}

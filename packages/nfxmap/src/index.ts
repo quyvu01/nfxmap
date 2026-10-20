@@ -28,7 +28,7 @@ export {
     entityDefinition,
     type EntityOptions,
 } from './entity.js';
-export type { QueryHandler, RequestClient } from './transport.js';
+export type { QueryHandler, RequestClient, RequestServer } from './transport.js';
 export {
     type Next,
     type ReceiveBehavior,
