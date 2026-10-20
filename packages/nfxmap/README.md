@@ -8,8 +8,8 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, the JSON wire messages of FxMap 5.1.1, the NATS and RabbitMQ transports, and the SQL (TypeORM) and MongoDB
-> providers. Not yet: the other transports (Kafka, gRPC, SQS, Azure Service Bus), GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ and Kafka transports, and the SQL (TypeORM) and
+> MongoDB providers. Not yet: the other transports (gRPC, SQS, Azure Service Bus), GraphQL, supervision and telemetry.
 
 ## Packages
 
@@ -18,6 +18,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
 | [`nfxmap-nats`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
 | [`nfxmap-rabbitmq`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-rabbitmq) | `RabbitMqRequestClient` and `RabbitMqServer`: request-reply over RabbitMQ (amqplib), on the exchanges and queues FxMap uses |
+| [`nfxmap-kafka`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
 | [`nfxmap-typeorm`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
 
@@ -196,6 +197,29 @@ await server.start();
 ```
 
 See [`nfxmap-rabbitmq`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-rabbitmq) for the options.
+
+## Kafka
+
+```sh
+npm install nfxmap nfxmap-kafka kafkajs
+```
+
+```ts
+import { Kafka } from 'kafkajs';
+import { KafkaRequestClient, KafkaServer } from 'nfxmap-kafka';
+
+const kafka = new Kafka({ clientId: 'order-service', brokers: ['localhost:9092'] });
+
+// The consumer: the name of the service is in the name of its reply topic
+const mapper = createDistributedMapper({ profiles: [new OrderResponseProfile()],
+                                         requestClient: new KafkaRequestClient(kafka, 'order-service') });
+
+// The owner
+const server = new KafkaServer(kafka, [users]);
+await server.start();
+```
+
+See [`nfxmap-kafka`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-kafka) for the options.
 
 ## Expressions
 

@@ -36,6 +36,13 @@ jobs:
           - 5672:5672
         options: >-
           --health-cmd "rabbitmq-diagnostics -q ping" --health-interval 5s --health-timeout 10s --health-retries 20
+      kafka:
+        image: apache/kafka:4.1.0
+        ports:
+          - 9092:9092
+        options: >-
+          --health-cmd "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"
+          --health-interval 5s --health-timeout 20s --health-retries 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -50,6 +57,7 @@ jobs:
           PG_URL: postgres://postgres:postgres@localhost:5432/nfxmap
           MONGO_URL: mongodb://localhost:27017
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          KAFKA_BROKERS: localhost:9092
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -68,3 +76,6 @@ jobs:
           cd ../nfxmap-rabbitmq
           node -e "require('nfxmap-rabbitmq')"
           node --input-type=module -e "await import('nfxmap-rabbitmq')"
+          cd ../nfxmap-kafka
+          node -e "require('nfxmap-kafka')"
+          node --input-type=module -e "await import('nfxmap-kafka')"
