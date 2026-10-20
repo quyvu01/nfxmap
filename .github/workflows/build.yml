@@ -43,6 +43,10 @@ jobs:
         options: >-
           --health-cmd "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"
           --health-interval 5s --health-timeout 20s --health-retries 20
+      elasticmq:
+        image: softwaremill/elasticmq-native:1.6.14
+        ports:
+          - 9324:9324
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -58,6 +62,7 @@ jobs:
           MONGO_URL: mongodb://localhost:27017
           RABBITMQ_URL: amqp://guest:guest@localhost:5672
           KAFKA_BROKERS: localhost:9092
+          SQS_ENDPOINT: http://localhost:9324
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -82,3 +87,6 @@ jobs:
           cd ../nfxmap-grpc
           node -e "require('nfxmap-grpc')"
           node --input-type=module -e "await import('nfxmap-grpc')"
+          cd ../nfxmap-sqs
+          node -e "require('nfxmap-sqs')"
+          node --input-type=module -e "await import('nfxmap-sqs')"
