@@ -406,5 +406,5 @@ describe.skipIf(!SQS_ENDPOINT)('SQS transport', () => {
         await server.start();
         const response = await request(client(), 'UserOf', {}, null);
         expect(response.items).toHaveLength(2);
-    });
+    }, 30_000);
 });
