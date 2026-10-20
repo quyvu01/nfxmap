@@ -8,8 +8,8 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ and Kafka transports, and the SQL (TypeORM) and
-> MongoDB providers. Not yet: the other transports (gRPC, SQS, Azure Service Bus), GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka and gRPC transports, and the SQL (TypeORM)
+> and MongoDB providers. Not yet: the SQS and Azure Service Bus transports, GraphQL, supervision and telemetry.
 
 ## Packages
 
@@ -19,6 +19,7 @@ service that owns the entity, batching the ids of every object into one request 
 | [`nfxmap-nats`](packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
 | [`nfxmap-rabbitmq`](packages/nfxmap-rabbitmq) | `RabbitMqRequestClient` and `RabbitMqServer`: request-reply over RabbitMQ (amqplib), on the exchanges and queues FxMap uses |
 | [`nfxmap-kafka`](packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
+| [`nfxmap-grpc`](packages/nfxmap-grpc) | `GrpcRequestClient` and `FxMapGrpcService`: FxMap's `FxMapTransportService` over gRPC (@grpc/grpc-js) |
 | [`nfxmap-typeorm`](packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 | [`nfxmap-mongodb`](packages/nfxmap-mongodb) | `MongoQueryHandler`: answers the requests for an entity from a MongoDB collection |
 
@@ -220,6 +221,28 @@ await server.start();
 ```
 
 See [`nfxmap-kafka`](packages/nfxmap-kafka) for the options.
+
+## gRPC
+
+```sh
+npm install nfxmap nfxmap-grpc @grpc/grpc-js
+```
+
+```ts
+import { Server, ServerCredentials } from '@grpc/grpc-js';
+import { FxMapGrpcService, GrpcRequestClient } from 'nfxmap-grpc';
+
+// The consumer: the hosts of the services that own keys
+const mapper = createDistributedMapper({ profiles: [new OrderResponseProfile()],
+                                         requestClient: new GrpcRequestClient({ hosts: ['http://user-service:9090'] }) });
+
+// The owner
+const server = new Server();
+new FxMapGrpcService([users]).addTo(server);
+server.bindAsync('0.0.0.0:9090', ServerCredentials.createInsecure(), () => undefined);
+```
+
+See [`nfxmap-grpc`](packages/nfxmap-grpc) for the options.
 
 ## Expressions
 

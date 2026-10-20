@@ -79,3 +79,6 @@ jobs:
           cd ../nfxmap-kafka
           node -e "require('nfxmap-kafka')"
           node --input-type=module -e "await import('nfxmap-kafka')"
+          cd ../nfxmap-grpc
+          node -e "require('nfxmap-grpc')"
+          node --input-type=module -e "await import('nfxmap-grpc')"
