@@ -65,6 +65,11 @@ export interface ExpressionEvaluatorOptions {
     readonly accessor?: PropertyAccessor;
     /** Gives now, for `:daysAgo`; the system clock by default. */
     readonly now?: () => Date;
+    /**
+     * Whether a navigation through null (`Country.Name` when Country is null) fails, as by default, or gives null, as
+     * when FxMap's database handlers translate it into a left join.
+     */
+    readonly nullNavigation?: 'error' | 'null';
 }
 
 const MAX_GROUP_KEYS = 5;
@@ -102,10 +107,12 @@ const NULL_SAFE_HINT = "(a null-safe navigation is written with '?', as in Addre
 export class ExpressionEvaluator {
     private readonly accessor: PropertyAccessor;
     private readonly now: () => Date;
+    private readonly nullNavigation: boolean;
 
     constructor(options: ExpressionEvaluatorOptions = {}) {
         this.accessor = options.accessor ?? defaultPropertyAccessor;
         this.now = options.now ?? (() => new Date());
+        this.nullNavigation = options.nullNavigation === 'null';
     }
 
     /** Evaluates an expression, given as text or parsed, on an object. */
@@ -165,7 +172,7 @@ export class ExpressionEvaluator {
             result = this.visit(segment, current) ?? null;
             if (result === null && i < node.segments.length - 1) {
                 // Address?.City stops when Address is null; Address.City cannot go on
-                if (segment.kind === 'Property' && segment.isNullSafe) return null;
+                if ((segment.kind === 'Property' && segment.isNullSafe) || this.nullNavigation) return null;
                 throw new ExpressionEvaluationError(`Cannot navigate from ${describeSegment(segment)}: it is null `
                     + NULL_SAFE_HINT);
             }
@@ -211,12 +218,14 @@ export class ExpressionEvaluator {
 
     private readPath(segments: string[], context: Context): unknown {
         let current: unknown = context.current;
-        segments.forEach((segment, i) => {
-            if ((current === null || current === undefined) && i > 0)
+        for (let i = 0; i < segments.length; i++) {
+            if ((current === null || current === undefined) && i > 0) {
+                if (this.nullNavigation) return null;
                 throw new ExpressionEvaluationError(`Cannot navigate from '${segments[i - 1]}': it is null `
                     + NULL_SAFE_HINT);
-            current = this.readProperty(current, segment);
-        });
+            }
+            current = this.readProperty(current, segments[i]);
+        }
         return current;
     }
 

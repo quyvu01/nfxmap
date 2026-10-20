@@ -11,12 +11,21 @@ jobs:
     strategy:
       matrix:
         node: [20, 22, 24]
-    # The NATS integration tests run against it
+    # The integration tests run against them
     services:
       nats:
         image: nats:2.11
         ports:
           - 4222:4222
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nfxmap
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,6 +37,7 @@ jobs:
       - run: npm test
         env:
           NATS_URL: nats://localhost:4222
+          PG_URL: postgres://postgres:postgres@localhost:5432/nfxmap
       - run: npm run build
       # The published files: the ESM and CommonJS entry points load
       - run: |
@@ -37,3 +47,6 @@ jobs:
           cd ../nfxmap-nats
           node -e "require('nfxmap-nats')"
           node --input-type=module -e "await import('nfxmap-nats')"
+          cd ../nfxmap-typeorm
+          node -e "require('nfxmap-typeorm')"
+          node --input-type=module -e "await import('nfxmap-typeorm')"

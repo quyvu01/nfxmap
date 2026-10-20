@@ -2,7 +2,12 @@ import type { MapContext } from './context.js';
 import { type EntityConfig, type EntityDefinition, entityDefinition } from './entity.js';
 import { DistributedKeyAssignedToMultipleEntitiesError, NoHandlerForDistributedKeyError } from './errors.js';
 import { ExpressionEvaluationError } from './expressions/errors.js';
-import { type PropertyAccessor, defaultPropertyAccessor, ExpressionEvaluator } from './expressions/evaluator.js';
+import {
+    defaultPropertyAccessor,
+    ExpressionEvaluator,
+    type ExpressionEvaluatorOptions,
+    type PropertyAccessor,
+} from './expressions/evaluator.js';
 import type { ExpressionNode } from './expressions/nodes.js';
 import { ExpressionParseError, parseExpression } from './expressions/parser.js';
 import { ExpressionTokenizeError } from './expressions/tokenizer.js';
@@ -13,6 +18,8 @@ import type { QueryHandler, RequestClient } from './transport.js';
 export interface EvaluationOptions {
     /** Gives now, for `:daysAgo`; the system clock by default. */
     readonly now?: () => Date;
+    /** Whether a navigation through null fails (by default) or gives null; see {@link ExpressionEvaluatorOptions}. */
+    readonly nullNavigation?: 'error' | 'null';
 }
 
 /**
@@ -26,11 +33,11 @@ export interface EvaluationOptions {
  */
 export class EntityExpressionEvaluator<T> {
     readonly definition: EntityDefinition<T>;
-    private readonly now: (() => Date) | undefined;
+    private readonly options: EvaluationOptions;
 
     constructor(config: EntityConfig<T>, options: EvaluationOptions = {}) {
         this.definition = entityDefinition(config);
-        this.now = options.now;
+        this.options = options;
     }
 
     /**
@@ -62,7 +69,8 @@ export class EntityExpressionEvaluator<T> {
         for (const id of request.selectorIds) {
             const entity = lookup(id);
             if (entity === null || entity === undefined) continue;
-            const evaluator = new ExpressionEvaluator({ accessor: this.accessorFor(entity), now: this.now });
+            const evaluator = new ExpressionEvaluator({ accessor: this.accessorFor(entity), now: this.options.now,
+                nullNavigation: this.options.nullNavigation });
             const values: ValueResponse[] = [];
             for (const expression of request.expressions) {
                 if (errors.has(expression)) continue;

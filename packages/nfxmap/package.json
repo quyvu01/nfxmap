@@ -36,6 +36,11 @@
       }
     }
   },
+  "typesVersions": {
+    "*": {
+      "expressions": ["./dist/cjs/expressions/index.d.ts"]
+    }
+  },
   "files": ["dist", "README.md"],
   "sideEffects": false,
   "scripts": {

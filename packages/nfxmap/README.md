@@ -8,8 +8,8 @@ service that owns the entity, batching the ids of every object into one request 
 
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
-> retries, the JSON wire messages of FxMap 5.1.1, and the NATS transport. Not yet: the other transports (RabbitMQ,
-> Kafka, gRPC, SQS, Azure Service Bus), the database providers, GraphQL, supervision and telemetry.
+> retries, the JSON wire messages of FxMap 5.1.1, the NATS transport and the SQL provider on TypeORM. Not yet: the
+> other transports (RabbitMQ, Kafka, gRPC, SQS, Azure Service Bus), MongoDB, GraphQL, supervision and telemetry.
 
 ## Packages
 
@@ -17,6 +17,7 @@ service that owns the entity, batching the ids of every object into one request 
 |---|---|
 | [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
 | [`nfxmap-nats`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
+| [`nfxmap-typeorm`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-typeorm) | `TypeOrmQueryHandler`: answers the requests for an entity from a SQL database, through TypeORM |
 
 ## Usage
 
@@ -53,6 +54,7 @@ const userConfig = defineEntity(User, { key: UserOf, id: 'id', defaultProperty: 
                                         exposedNames: { UserEmail: 'email' } });
 
 const users = new InMemoryQueryHandler(new UserConfig(), () => loadUsers());
+// or, from a SQL database with nfxmap-typeorm: new TypeOrmQueryHandler(new UserConfig(), dataSource)
 ```
 
 The consumer:
