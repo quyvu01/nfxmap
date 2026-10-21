@@ -1,0 +1,27 @@
+{
+  "name": "nfxmap-sample-user-service",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A sample service of nfxmap: owns the users (TypeORM, SQLite) and answers the key UserOf on gRPC",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/main.js",
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.14.6",
+    "better-sqlite3": "^12.11.1",
+    "nfxmap": "*",
+    "nfxmap-grpc": "*",
+    "nfxmap-typeorm": "*",
+    "typeorm": "^1.1.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3"
+  }
+}

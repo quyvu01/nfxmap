@@ -5,12 +5,13 @@
   "license": "Apache-2.0",
   "workspaces": [
     "packages/*",
-    "interop"
+    "interop",
+    "samples/*"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "test": "npm test --workspaces",
-    "typecheck": "npm run typecheck --workspaces"
+    "test": "npm test --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "engines": {
     "node": ">=20"

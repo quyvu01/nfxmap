@@ -190,3 +190,48 @@ jobs:
           SQS_ENDPOINT: http://localhost:4566
           SERVICEBUS_CONNECTION_STRING: >-
             Endpoint=sb://localhost:5673;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
+
+  # samples/: the two sample services, started and checked by samples/run.mjs on each system
+  samples:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node samples/run.mjs --check
+
+  # The samples with those of jfxmap: its order service on this user service, this order service on its user service
+  samples-with-jfxmap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: quyvu01/jfxmap
+          path: jfxmap
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - run: ./gradlew :samples:user-service:bootJar :samples:order-service:bootJar
+        working-directory: jfxmap
+      - name: A Node order service on the user service of jfxmap
+        run: node samples/run.mjs --check
+        env:
+          USER_SERVICE_COMMAND: java -jar $(ls jfxmap/samples/user-service/build/libs/*.jar | grep -v -- -plain)
+      - name: The order service of jfxmap on a Node user service
+        run: node samples/run.mjs --check
+        env:
+          ORDER_SERVICE_COMMAND: java -jar $(ls jfxmap/samples/order-service/build/libs/*.jar | grep -v -- -plain)
