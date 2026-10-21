@@ -74,3 +74,13 @@ export {
     type SupervisorLogger,
     type SupervisorOptions,
 } from './supervision.js';
+export {
+    describeProblem,
+    expressionError,
+    isPlainName,
+    NfxMapValidationError,
+    validateEntities,
+    validateOrThrow,
+    validateProfiles,
+    type ValidationProblem,
+} from './validation.js';

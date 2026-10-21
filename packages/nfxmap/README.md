@@ -15,7 +15,7 @@ service that owns the entity, batching the ids of every object into one request 
 
 | Package | Content |
 |---|---|
-| [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages, the `ServerSupervisor`; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
+| [`nfxmap`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap) | `ProfileOf` / `defineProfile`, `EntityConfigureOf` / `defineEntity`, `createDistributedMapper`, the `RequestClient` and `QueryHandler` interfaces, `InMemoryQueryHandler` and `LocalRequestClient`, the pipelines and `RetryPolicy`, the wire messages, the `ServerSupervisor`, `validateOrThrow`; `nfxmap/expressions` is the expression language (tokenizer, parser, evaluator) |
 | [`nfxmap-nats`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-nats) | `NatsRequestClient` and `NatsServer`: request-reply over NATS, on the subjects FxMap uses |
 | [`nfxmap-rabbitmq`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-rabbitmq) | `RabbitMqRequestClient` and `RabbitMqServer`: request-reply over RabbitMQ (amqplib), on the exchanges and queues FxMap uses |
 | [`nfxmap-kafka`](https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-kafka) | `KafkaRequestClient` and `KafkaServer`: requests and replies over Kafka (kafkajs), on the topics FxMap uses |
@@ -128,6 +128,31 @@ which is also how a nested object gets mapped in turn by its own profile:
 .for('createdAt', 'CreatedAt', { convert: v => new Date(v as string) })
 .for('owner', '{Id, Name}', { convert: v => Object.assign(new UserView(), v) })
 ```
+
+## Validation
+
+`validateOrThrow` checks the profiles and the entity configurations when the service starts, for the mistakes the
+mapper or a handler would otherwise report on the first request (jfxmap's `JfxMapValidator`, the checks of
+FxMap.Analyzers):
+
+```ts
+import { validateOrThrow } from 'nfxmap';
+
+validateOrThrow({ profiles: [new OrderProfile()], entities: [new UserConfig()] });
+// NfxMapValidationError: nfxmap found 1 problem(s):
+//  - OrderProfile.userEmail: Expression 'Email:uper' is invalid: Unknown function 'uper' at position 6
+```
+
+- a profile whose rules cannot be declared, or a second profile for the same model;
+- a fixed expression that does not parse (the expressions of a conditional rule are chosen when the mapping runs, so
+  they are not checked);
+- rules whose keys are filled by each other, so none of them can run first;
+- an entity configuration without an id or a key, or with an exposed name declared twice;
+- an exposed name an expression cannot use, such as `User Email` or `User.Name`;
+- two entity configurations for the same distributed key.
+
+`validateProfiles` and `validateEntities` return the problems (`source`, `property`, `expression`, `message`) instead
+of throwing.
 
 ## Around the requests
 
