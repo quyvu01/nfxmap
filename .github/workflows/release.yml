@@ -1,0 +1,67 @@
+name: release
+
+# Pushing a tag v<version> (e.g. v0.1.0) checks, builds and tests everything, then publishes every package of packages/
+# to npm under that version, nfxmap first, with provenance. A version with a label (v0.2.0-rc.1) is published under the
+# dist-tag "next", so `npm install nfxmap` keeps the latest release. A package already published at that version is
+# skipped, so the workflow can be run again after a failure.
+#
+# Secret: NPM_TOKEN, an npm granular access token that can publish the nfxmap packages (see RELEASING.md).
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write   # npm provenance
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read the version from the tag
+        id: version
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::The tag $GITHUB_REF_NAME is not v<major>.<minor>.<patch>[-<label>]"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "dist-tag=next" >> "$GITHUB_OUTPUT"; else echo "dist-tag=latest" >> "$GITHUB_OUTPUT"; fi
+      - name: Check the secret
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then echo "::error::The repository secret NPM_TOKEN is not set"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: node scripts/set-version.mjs ${{ steps.version.outputs.version }}
+      - run: npm run typecheck
+      # The tests that need a broker are skipped here: the build workflow runs them on every push to main
+      - run: npm test
+      - run: npm run build
+      - run: node scripts/check-packages.mjs
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ steps.version.outputs.dist-tag }}
+        run: |
+          for name in $(node --input-type=module -e "import { publishedPackages } from './scripts/packages.mjs'; console.log(publishedPackages().map(pkg => pkg.manifest.name).join(' '))"); do
+            if [ "$(npm view "$name@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+              echo "$name@$VERSION is already on npm"
+              continue
+            fi
+            npm publish -w "packages/$name" --access public --provenance --tag "$DIST_TAG"
+            echo "::notice::Published $name@$VERSION ($DIST_TAG)"
+          done

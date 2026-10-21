@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "paths": {
+      "nfxmap": ["../packages/nfxmap/src/index.ts"],
+      "nfxmap/expressions": ["../packages/nfxmap/src/expressions/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

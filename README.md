@@ -403,6 +403,19 @@ See FxMap's [expression documentation](https://fxmapper.net/docs/expressions) fo
 - dates are `Date`s, read in UTC; `:format` takes the .NET patterns (`'yyyy-MM-dd HH:mm'`);
 - `Address.City` fails when `Address` is null; `Address?.City` gives null; `undefined` is null.
 
+## Benchmarks
+
+[`benchmarks`](benchmarks/) measures the expression parser (simple, medium and complex expressions), in-memory mapping
+(`createDistributedMapper` over `LocalRequestClient` and `InMemoryQueryHandler`, 1, 100 and 10,000 DTOs with
+navigations, an aggregation, a chained rule and nested DTOs) and the JSON wire messages, as jfxmap's benchmarks do.
+`npm test` runs each once and checks its result, not the benchmarks:
+
+```sh
+npm run build -w packages/nfxmap -w benchmarks
+npm run bench -w benchmarks                          # all, one second each
+npm run bench -w benchmarks -- mapping --time 3000   # those whose name contains "mapping", three seconds each
+```
+
 ## Build
 
 Node 20 or later:
@@ -412,3 +425,5 @@ npm install
 npm test
 npm run build      # ESM and CommonJS, with type declarations
 ```
+
+[RELEASING.md](RELEASING.md) says how the packages are published to npm.

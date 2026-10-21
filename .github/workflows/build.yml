@@ -81,41 +81,9 @@ jobs:
           SERVICEBUS_CONNECTION_STRING: >-
             Endpoint=sb://localhost:5673;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;
       - run: npm run build
-      # The published files: the ESM and CommonJS entry points load
-      - run: |
-          cd packages/nfxmap
-          node -e "require('nfxmap'); require('nfxmap/expressions')"
-          node --input-type=module -e "await import('nfxmap'); await import('nfxmap/expressions')"
-          cd ../nfxmap-nats
-          node -e "require('nfxmap-nats')"
-          node --input-type=module -e "await import('nfxmap-nats')"
-          cd ../nfxmap-typeorm
-          node -e "require('nfxmap-typeorm')"
-          node --input-type=module -e "await import('nfxmap-typeorm')"
-          cd ../nfxmap-mongodb
-          node -e "require('nfxmap-mongodb')"
-          node --input-type=module -e "await import('nfxmap-mongodb')"
-          cd ../nfxmap-rabbitmq
-          node -e "require('nfxmap-rabbitmq')"
-          node --input-type=module -e "await import('nfxmap-rabbitmq')"
-          cd ../nfxmap-kafka
-          node -e "require('nfxmap-kafka')"
-          node --input-type=module -e "await import('nfxmap-kafka')"
-          cd ../nfxmap-grpc
-          node -e "require('nfxmap-grpc')"
-          node --input-type=module -e "await import('nfxmap-grpc')"
-          cd ../nfxmap-sqs
-          node -e "require('nfxmap-sqs')"
-          node --input-type=module -e "await import('nfxmap-sqs')"
-          cd ../nfxmap-azure-servicebus
-          node -e "require('nfxmap-azure-servicebus')"
-          node --input-type=module -e "await import('nfxmap-azure-servicebus')"
-          cd ../nfxmap-graphql
-          node -e "require('nfxmap-graphql')"
-          node --input-type=module -e "await import('nfxmap-graphql')"
-          cd ../nfxmap-opentelemetry
-          node -e "require('nfxmap-opentelemetry')"
-          node --input-type=module -e "await import('nfxmap-opentelemetry')"
+      # The packages as npm would publish them: what each tarball holds, and that each loads with require and import
+      # in a project that installs them
+      - run: node scripts/check-packages.mjs
 
   # nfxmap in one system with the other ports of FxMap: a .NET service on FxMap 5.1.1 and a Java one on jfxmap ask
   # nfxmap and are asked by it over NATS, RabbitMQ, Kafka, SQS and Service Bus (interop/)
