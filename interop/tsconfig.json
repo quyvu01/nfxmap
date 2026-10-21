@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "paths": {
+      "nfxmap": ["../packages/nfxmap/src/index.ts"],
+      "nfxmap-nats": ["../packages/nfxmap-nats/src/index.ts"],
+      "nfxmap-rabbitmq": ["../packages/nfxmap-rabbitmq/src/index.ts"],
+      "nfxmap-kafka": ["../packages/nfxmap-kafka/src/index.ts"],
+      "nfxmap-sqs": ["../packages/nfxmap-sqs/src/index.ts"],
+      "nfxmap-azure-servicebus": ["../packages/nfxmap-azure-servicebus/src/index.ts"],
+      "nfxmap-opentelemetry": ["../packages/nfxmap-opentelemetry/src/index.ts"]
+    }
+  },
+  "include": ["test"]
+}
