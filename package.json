@@ -6,7 +6,8 @@
   "workspaces": [
     "packages/*",
     "interop",
-    "samples/*"
+    "samples/*",
+    "benchmarks"
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",

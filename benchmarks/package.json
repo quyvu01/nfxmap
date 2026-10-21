@@ -1,0 +1,23 @@
+{
+  "name": "nfxmap-benchmarks",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Benchmarks of nfxmap: the expression parser, in-memory mapping and the JSON wire messages",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "bench": "node dist/run.js"
+  },
+  "dependencies": {
+    "nfxmap": "*",
+    "tinybench": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
