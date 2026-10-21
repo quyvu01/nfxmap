@@ -116,3 +116,77 @@ jobs:
           cd ../nfxmap-opentelemetry
           node -e "require('nfxmap-opentelemetry')"
           node --input-type=module -e "await import('nfxmap-opentelemetry')"
+
+  # nfxmap in one system with the other ports of FxMap: a .NET service on FxMap 5.1.1 and a Java one on jfxmap ask
+  # nfxmap and are asked by it over NATS, RabbitMQ, Kafka, SQS and Service Bus (interop/)
+  interop:
+    runs-on: ubuntu-latest
+    services:
+      nats:
+        image: nats:2.11
+        ports:
+          - 4222:4222
+      rabbitmq:
+        image: rabbitmq:4.1
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q ping" --health-interval 5s --health-timeout 10s --health-retries 20
+      kafka:
+        image: apache/kafka:4.1.0
+        ports:
+          - 9092:9092
+        options: >-
+          --health-cmd "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092"
+          --health-interval 5s --health-timeout 20s --health-retries 20
+      # LocalStack, as jfxmap's interop tests: FxMap.Aws.Sqs is checked against it
+      localstack:
+        image: localstack/localstack:4.9
+        ports:
+          - 4566:4566
+    steps:
+      - uses: actions/checkout@v4
+      # jfxmap is built from its sources
+      - uses: actions/checkout@v4
+        with:
+          repository: quyvu01/jfxmap
+          path: jfxmap
+      - name: Start the Service Bus emulator
+        run: |
+          docker network create servicebus
+          docker run -d --name sql --network servicebus -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD=Fxmap_Passw0rd! \
+            mcr.microsoft.com/mssql/server:2022-latest
+          docker run -d --name servicebus --network servicebus -p 5673:5672 -p 5300:5300 -e SQL_SERVER=sql \
+            -e MSSQL_SA_PASSWORD=Fxmap_Passw0rd! -e ACCEPT_EULA=Y \
+            -v "$PWD/interop/servicebus-emulator.json:/ServiceBus_Emulator/ConfigFiles/Config.json" \
+            mcr.microsoft.com/azure-messaging/servicebus-emulator:2.0.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - run: dotnet publish interop/dotnet-probe -c Release -o interop/dotnet-probe/out
+      - run: jfxmap/gradlew -p interop/java-probe installDist -PjfxmapDir="$GITHUB_WORKSPACE/jfxmap"
+      - name: Wait for the Service Bus emulator
+        run: |
+          for i in $(seq 1 90); do curl -sf localhost:5300/health && exit 0; sleep 2; done
+          docker logs servicebus
+          exit 1
+      - run: npm test -w interop
+        env:
+          NFXMAP_DOTNET_PROBE: dotnet ${{ github.workspace }}/interop/dotnet-probe/out/DotnetProbe.dll
+          NFXMAP_JAVA_PROBE: ${{ github.workspace }}/interop/java-probe/build/install/java-probe/bin/java-probe
+          NATS_URL: nats://localhost:4222
+          RABBITMQ_URL: amqp://guest:guest@localhost:5672
+          KAFKA_BROKERS: localhost:9092
+          SQS_ENDPOINT: http://localhost:4566
+          SERVICEBUS_CONNECTION_STRING: >-
+            Endpoint=sb://localhost:5673;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=SAS_KEY_VALUE;UseDevelopmentEmulator=true;

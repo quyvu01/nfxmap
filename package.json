@@ -4,10 +4,11 @@
   "description": "FxMap for Node.js: distributed data mapping",
   "license": "Apache-2.0",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "interop"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspaces --if-present",
     "test": "npm test --workspaces",
     "typecheck": "npm run typecheck --workspaces"
   },

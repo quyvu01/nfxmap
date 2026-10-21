@@ -222,6 +222,9 @@ in jfxmap). `WireMessages` reads and writes the JSON that FxMap 5.1.1 sends on i
 names FxMap derives from a key, `WireResponder` answers a received request with the handler of its key, and
 `PendingReplies` holds the requests a client waits for, by correlation id: the pieces the transports are built on. A transport package speaks to the FxMap and jfxmap services on the same broker.
 
+[`interop`](https://github.com/quyvu01/nfxmap/tree/main/interop) checks it against a real .NET service on FxMap 5.1.1 and a Java service on jfxmap, over NATS,
+RabbitMQ, Kafka, SQS and Service Bus, in both directions, traces included.
+
 ## NATS
 
 ```sh
