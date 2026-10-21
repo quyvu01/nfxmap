@@ -11,11 +11,14 @@ A tag `v<version>` runs [.github/workflows/release.yml](.github/workflows/releas
 2. it typechecks, runs the tests that need no broker, and builds;
 3. it packs each package, checks what the tarball holds, installs them all in a new project and loads each one with
    `require` and `import` ([scripts/check-packages.mjs](scripts/check-packages.mjs));
-4. it publishes them, `nfxmap` first, with [provenance](https://docs.npmjs.com/generating-provenance-statements).
+4. it publishes them, `nfxmap` first, with [provenance](https://docs.npmjs.com/generating-provenance-statements) when
+   the repository is public: npm refuses provenance from a private repository.
 
 A version with a label (`v0.2.0-rc.1`) goes to the dist-tag `next`, so `npm install nfxmap` still gets the latest
 release; any other goes to `latest`. A package already published at that version is skipped, so the workflow can be
-re-run after a failure. A version published on npm can never be published again, even after it is unpublished.
+re-run after a failure. A re-run uses the workflow of the tagged commit: after a fix to the workflow, move the tag to a
+commit that has it (`git tag -f v0.1.0 origin/main && git push -f origin v0.1.0`) rather than re-running. A version
+published on npm can never be published again, even after it is unpublished.
 
 ## Once
 
