@@ -1,9 +1,10 @@
 name: release
 
 # Pushing a tag v<version> (e.g. v0.1.0) checks, builds and tests everything, then publishes every package of packages/
-# to npm under that version, nfxmap first, with provenance. A version with a label (v0.2.0-rc.1) is published under the
-# dist-tag "next", so `npm install nfxmap` keeps the latest release. A package already published at that version is
-# skipped, so the workflow can be run again after a failure.
+# to npm under that version, nfxmap first. The packages carry provenance while the repository is public: npm refuses it
+# from a private one. A version with a label (v0.2.0-rc.1) is published under the dist-tag "next", so
+# `npm install nfxmap` keeps the latest release. A package already published at that version is skipped, so the
+# workflow can be run again after a failure.
 #
 # Secret: NPM_TOKEN, an npm granular access token that can publish the nfxmap packages (see RELEASING.md).
 
@@ -56,12 +57,14 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           VERSION: ${{ steps.version.outputs.version }}
           DIST_TAG: ${{ steps.version.outputs.dist-tag }}
+          # npm refuses a provenance statement from a private repository
+          PROVENANCE: ${{ github.event.repository.private && '--no-provenance' || '--provenance' }}
         run: |
           for name in $(node --input-type=module -e "import { publishedPackages } from './scripts/packages.mjs'; console.log(publishedPackages().map(pkg => pkg.manifest.name).join(' '))"); do
             if [ "$(npm view "$name@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
               echo "$name@$VERSION is already on npm"
               continue
             fi
-            npm publish -w "packages/$name" --access public --provenance --tag "$DIST_TAG"
+            npm publish -w "packages/$name" --access public $PROVENANCE --tag "$DIST_TAG"
             echo "::notice::Published $name@$VERSION ($DIST_TAG)"
           done
