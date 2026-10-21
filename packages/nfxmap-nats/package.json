@@ -9,7 +9,18 @@
     "url": "git+https://github.com/quyvu01/nfxmap.git",
     "directory": "packages/nfxmap-nats"
   },
-  "keywords": ["fxmap", "nfxmap", "nats", "mapping", "distributed", "microservices"],
+  "homepage": "https://github.com/quyvu01/nfxmap/tree/main/packages/nfxmap-nats#readme",
+  "bugs": {
+    "url": "https://github.com/quyvu01/nfxmap/issues"
+  },
+  "keywords": [
+    "fxmap",
+    "nfxmap",
+    "nats",
+    "mapping",
+    "distributed",
+    "microservices"
+  ],
   "type": "module",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
@@ -26,12 +37,17 @@
       }
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json && tsc -p tsconfig.cjs.json && node scripts/mark-cjs.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "prepack": "node -e \"require('fs').copyFileSync('../../LICENSE', 'LICENSE')\""
   },
   "engines": {
     "node": ">=20"

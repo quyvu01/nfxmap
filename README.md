@@ -425,3 +425,5 @@ npm install
 npm test
 npm run build      # ESM and CommonJS, with type declarations
 ```
+
+[RELEASING.md](RELEASING.md) says how the packages are published to npm.

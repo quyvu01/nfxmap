@@ -3,3 +3,4 @@ dist/
 coverage/
 *.tsbuildinfo
 samples/build/
+packages/*/LICENSE
