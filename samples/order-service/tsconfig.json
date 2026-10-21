@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "../..",
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "paths": {
+      "nfxmap": ["../../packages/nfxmap/src/index.ts"],
+      "nfxmap/expressions": ["../../packages/nfxmap/src/expressions/index.ts"],
+      "nfxmap-grpc": ["../../packages/nfxmap-grpc/src/index.ts"],
+      "nfxmap-typeorm": ["../../packages/nfxmap-typeorm/src/index.ts"]
+    }
+  },
+  "include": ["src", "test"]
+}

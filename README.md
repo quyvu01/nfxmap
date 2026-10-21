@@ -225,6 +225,9 @@ names FxMap derives from a key, `WireResponder` answers a received request with 
 [`interop`](interop/) checks it against a real .NET service on FxMap 5.1.1 and a Java service on jfxmap, over NATS,
 RabbitMQ, Kafka, SQS and Service Bus, in both directions, traces included.
 
+[`samples`](samples/) has a user service and an order service, which also run with the samples of jfxmap
+(`node samples/run.mjs`).
+
 ## NATS
 
 ```sh
