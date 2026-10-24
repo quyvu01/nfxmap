@@ -6,6 +6,10 @@ library, written in TypeScript. Its Java sibling is [jfxmap](https://github.com/
 Given a DTO with a foreign key (`userId`), nfxmap fills its related properties (`userName`, `userEmail`) from the
 service that owns the entity, batching the ids of every object into one request per entity type.
 
+<p align="center">
+  <img src="docs/assets/fxmap-hero.gif" alt="FxMap fills the UserName and UserEmail of an order from the User service in one call" width="900" />
+</p>
+
 > Status: early. Ported: the core (profiles, entity configurations, the mapper with id batching, dependency ordering
 > and nested mapping), the full expression language, the in-memory handler, the send and receive pipelines with
 > retries, the JSON wire messages of FxMap 5.1.1, the NATS, RabbitMQ, Kafka, gRPC, SQS and Azure Service
